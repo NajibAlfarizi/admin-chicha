@@ -3,23 +3,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { loginAdmin } from "lib/api/auth";
 
 export default function AdminLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-
-    // Data Dummy Admin
-    if (email === "admin@chichamobile.com" && password === "admin123") {
-      toast.success("Login berhasil! Mengalihkan ke dashboard...");
-      setTimeout(() => {
-        router.push("/admin/dashboard"); // Arahkan ke dashboard admin
-      }, 1500);
-    } else {
-      toast.error("Email atau password salah!");
+    try {
+      const data = await loginAdmin({ email, password });
+      localStorage.setItem("token", data.token);
+      toast.success("Login berhasil!");
+      setTimeout(() => router.push("/admin/dashboard"), 1500);
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 

@@ -1,5 +1,5 @@
 
-import AdminLogin from "./login/page";
+import AdminLogin from "./admin-login/page";
 export default function Home() {
   return (
     <html lang="en">
