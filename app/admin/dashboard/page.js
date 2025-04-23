@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
+import useAuthAdmin from "lib/hooks/useAuthAdmin";
 
 import {
   Chart as ChartJS,
@@ -136,7 +137,14 @@ const options = {
   },
 };
 
+
+
 export default function Dashboard() {
+  const { isLoading } = useAuthAdmin()
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
   return (
     <div className="p-8 space-y-8 bg-gray-100 min-h-screen">
 

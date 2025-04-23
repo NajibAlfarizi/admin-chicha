@@ -15,6 +15,7 @@ export default function AdminLogin() {
     try {
       const data = await loginAdmin({ email, password });
       localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role); // Simpan role admin
       toast.success("Login berhasil!");
       setTimeout(() => router.push("/admin/dashboard"), 1500);
     } catch (error) {
