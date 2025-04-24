@@ -1,21 +1,14 @@
 "use client";
-import { useState } from "react";
 import { Listbox } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-
-// Dummy data kategori (bisa diganti dari API)
-const categories = [
-  { id: 1, name: "Smartphone" },
-  { id: 2, name: "Aksesoris" },
-  { id: 3, name: "Laptop" },
-  { id: 4, name: "Tablet" },
-  { id: 5, name: "Smartwatch" },
-];
+import useCategories from "../../lib/hooks/useCategories"; 
 
 export default function CategoryDropdown({
   selectedCategory,
   setSelectedCategory,
 }) {
+  const { categories, loading } = useCategories();
+
   return (
     <Listbox value={selectedCategory} onChange={setSelectedCategory}>
       <div className="relative">
@@ -31,34 +24,40 @@ export default function CategoryDropdown({
 
         {/* Opsi Dropdown */}
         <Listbox.Options className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto focus:outline-none">
-          {categories.map((category) => (
-            <Listbox.Option
-              key={category.id}
-              value={category}
-              className={({ active }) =>
-                `relative cursor-pointer select-none py-3 pl-10 pr-4 ${
-                  active ? "bg-blue-100 text-blue-900" : "text-gray-900"
-                }`
-              }
-            >
-              {({ selected }) => (
-                <>
-                  <span
-                    className={`block truncate ${
-                      selected ? "font-semibold" : "font-normal"
-                    }`}
-                  >
-                    {category.name}
-                  </span>
-                  {selected && (
-                    <span className="absolute inset-y-0 left-3 flex items-center text-blue-600">
-                      <CheckIcon className="w-5 h-5" />
+          {loading ? (
+            <div className="py-3 px-4 text-gray-500">Memuat kategori...</div>
+          ) : categories.length === 0 ? (
+            <div className="py-3 px-4 text-gray-500">Tidak ada kategori</div>
+          ) : (
+            categories.map((category) => (
+              <Listbox.Option
+                key={category._id}
+                value={category}
+                className={({ active }) =>
+                  `relative cursor-pointer select-none py-3 pl-10 pr-4 ${
+                    active ? "bg-blue-100 text-blue-900" : "text-gray-900"
+                  }`
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <span
+                      className={`block truncate ${
+                        selected ? "font-semibold" : "font-normal"
+                      }`}
+                    >
+                      {category.name}
                     </span>
-                  )}
-                </>
-              )}
-            </Listbox.Option>
-          ))}
+                    {selected && (
+                      <span className="absolute inset-y-0 left-3 flex items-center text-blue-600">
+                        <CheckIcon className="w-5 h-5" />
+                      </span>
+                    )}
+                  </>
+                )}
+              </Listbox.Option>
+            ))
+          )}
         </Listbox.Options>
       </div>
     </Listbox>

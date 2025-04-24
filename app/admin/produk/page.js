@@ -1,88 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FiEdit, FiTrash, FiPlus } from "react-icons/fi";
 import Pagination from "../../components/Pagination";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import { getProducts, deleteProduct } from "../../../lib/api/products";
+import { toast, ToastContainer } from "react-toastify";
 
 const ProdukPage = () => {
-  const allProducts = [
-    {
-      id: 1,
-      name: "iPhone 13",
-      price: "Rp 12.000.000",
-      stock: 15,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 2,
-      name: "Samsung S22",
-      price: "Rp 10.000.000",
-      stock: 10,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 3,
-      name: "Xiaomi 12",
-      price: "Rp 8.000.000",
-      stock: 20,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 4,
-      name: "Oppo Reno 8",
-      price: "Rp 7.500.000",
-      stock: 12,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 5,
-      name: "Vivo V23",
-      price: "Rp 7.000.000",
-      stock: 8,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 6,
-      name: "Realme GT 2",
-      price: "Rp 6.500.000",
-      stock: 14,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 7,
-      name: "iPhone 12",
-      price: "Rp 10.000.000",
-      stock: 18,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-    {
-      id: 8,
-      name: "Samsung A52",
-      price: "Rp 6.000.000",
-      stock: 25,
-      category: "Smartphone",
-      image:
-        "https://th.bing.com/th/id/OIF.YZYGu7EE6Vs3s6yVMu6KIw?rs=1&pid=ImgDetMain",
-    },
-  ];
-
-  // Pagination State
+  const [allProducts, setAllProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const productsPerPage = 5;
   const totalPages = Math.ceil(allProducts.length / productsPerPage);
 
@@ -91,8 +23,21 @@ const ProdukPage = () => {
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const products = allProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState(null);
+  // Fetch data produk dari backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await getProducts();
+        setAllProducts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const openDialog = (id) => {
     setSelectedProductId(id);
@@ -104,13 +49,37 @@ const ProdukPage = () => {
     setSelectedProductId(null);
   };
 
-  const handleDelete = () => {
-    setProducts(products.filter((product) => product.id !== selectedProductId));
-    closeDialog();
+  const handleDelete = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await deleteProduct(selectedProductId, token);
+  
+      setAllProducts((prev) =>
+        prev.filter((product) => product._id !== selectedProductId)
+      );
+  
+      toast.success("Produk berhasil dihapus!"); // ⬅️ Pindah ke sini
+      console.log("Toast dipanggil ✅");  
+      setTimeout(() => {
+        closeDialog();
+      }, 100);
+    } catch (err) {
+      toast.error("Gagal menghapus produk: " + err.message);
+    }
   };
+  
+  
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="p-4">
+      <ToastContainer />
       {/* Header */}
       <div className="p-2 rounded-lg flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
@@ -139,31 +108,33 @@ const ProdukPage = () => {
           <tbody>
             {products.map((product) => (
               <tr
-                key={product.id}
+                key={product._id?.toString()}
                 className="border-b hover:bg-gray-50 transition-all"
               >
                 <td className="p-3">
                   <img
-                    src={product.image}
-                    alt={product.name}
+                    src={`http://localhost:5000/${product.gambar}`}
+                    alt={product.nama}
                     className="w-12 h-12 object-cover rounded-md border"
                   />
                 </td>
-                <td className="p-3 text-gray-800 font-medium">
-                  {product.name}
+                <td className="p-3 text-black font-medium">
+                  {product.nama}
                 </td>
-                <td className="p-3 text-gray-600">{product.price}</td>
-                <td className="p-3 text-gray-600">{product.stock}</td>
-                <td className="p-3 text-gray-600">{product.category}</td>
+                <td className="p-2">Rp{product.harga.toLocaleString('id-ID', {
+                  minimumFractionDigits: 0,
+                })}</td>
+                <td className="p-2">{product.stok}</td>
+                <td className="p-2">{product.kategori?.name}</td>
                 <td className="p-3 flex justify-center gap-3">
-                  <Link href={`/admin/produk/edit/${product.id}`}>
+                  <Link href={`/admin/produk/edit/${product._id}`}>
                     <button className="text-blue-600 hover:bg-blue-100 p-2 rounded-md transition-all">
                       <FiEdit className="text-lg" />
                     </button>
                   </Link>
                   <button
                     className="text-red-600 hover:bg-red-100 p-2 rounded-md transition-all"
-                    onClick={() => openDialog(product.id)}
+                    onClick={() => openDialog(product._id)}
                   >
                     <FiTrash className="text-lg" />
                   </button>

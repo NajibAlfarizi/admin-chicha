@@ -1,6 +1,7 @@
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import "../../app/globals.css"; // Import Tailwind CSS
+import { ToastContainer } from "react-toastify";
 
 export const metadata = {
   title: "Admin Dashboard - ChiCha Mobile",

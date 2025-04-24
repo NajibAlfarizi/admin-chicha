@@ -5,8 +5,10 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CategoryDropdown from "../../../components/CategoryDropdown";
 import Link from "next/link";
+import useAuthAdmin from "lib/hooks/useAuthAdmin";
 
 export default function TambahProduk() {
+  const { isLoading } = useAuthAdmin();
   const router = useRouter();
 
   const [nama, setNama] = useState("");
@@ -17,7 +19,10 @@ export default function TambahProduk() {
   const [gambar, setGambar] = useState(null);
   const [preview, setPreview] = useState("");
 
-  // Handle Upload Gambar
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : "";
+
+  // Handle saat gambar diubah
   const handleGambarChange = (e) => {
     const file = e.target.files[0];
     setGambar(file);
@@ -33,35 +38,66 @@ export default function TambahProduk() {
     }
   };
 
-  // Handle Submit Form
-  const handleSubmit = (e) => {
+  // Handle submit produk
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!nama || !selectedCategory || !harga || !stok || !deskripsi) {
       toast.error("Mohon lengkapi semua data produk!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
       return;
     }
 
-    toast.success(`Produk "${nama}" berhasil ditambahkan!`, {
-      position: "top-right",
-      autoClose: 2000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-    });
+    const formData = new FormData();
+    formData.append("nama", nama);
+    formData.append("kategori", selectedCategory._id)
+    formData.append("harga", harga);
+    formData.append("stok", stok);
+    formData.append("deskripsi", deskripsi);
+    if (gambar) {
+      formData.append("gambar", gambar);
+    }
 
-    setTimeout(() => {
-    router.push("/admin/produk"); // Ganti dengan path halaman daftar produk
-  }, 2000);
+    try {    
+      const res = await fetch("http://localhost:5000/api/products", {
+        method: "POST",
+        headers: {
+        Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Gagal menambah produk");
+      }
+
+      toast.success(`Produk "${nama}" berhasil ditambahkan!`, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        router.push("/admin/produk");
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Error: ${err.message}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-gray-100 text-gray-900 p-4">
@@ -71,7 +107,7 @@ export default function TambahProduk() {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {/* Kolom 1: Input Produk */}
+          {/* Kolom 1: Form Produk */}
           <div className="md:col-span-2">
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">
@@ -138,7 +174,7 @@ export default function TambahProduk() {
             </div>
           </div>
 
-          {/* Kolom 2: Upload Gambar */}
+          {/* Kolom 2: Gambar */}
           <div className="bg-gray-100 p-4 rounded-lg border border-gray-300">
             <label className="block text-gray-700 font-medium mb-2">
               Gambar Produk

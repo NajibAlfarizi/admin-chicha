@@ -18,7 +18,18 @@ export default function EditProduk() {
 
   // Ambil data produk berdasarkan ID
   useEffect(() => {
-    if (!id) return;
+    console.log("ID dari params:", id);
+
+    if (!id) return toast.error("ID produk tidak ditemukan!");
+    // router.push(`/admin/produk`);
+
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : "";
+    if (!token) {
+      toast.error("Token tidak ditemukan!");
+      router.push("/admin/login");
+      return;
+    }
 
     const fetchProduk = async () => {
       try {
